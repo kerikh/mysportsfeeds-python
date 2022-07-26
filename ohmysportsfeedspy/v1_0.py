@@ -17,8 +17,9 @@ class API_v1_0(object):
         self.base_url = "https://api.mysportsfeeds.com/v1.0/pull"
         self.headers = {
             'Accept-Encoding': 'gzip',
-            'User-Agent': 'MySportsFeeds Python/{} ({})'.format(ohmysportsfeedspy.__version__, platform.platform())
+            'User-Agent': f'MySportsFeeds Python/{ohmysportsfeedspy.__version__} ({platform.platform()})',
         }
+
 
         self.verbose = verbose
         self.store_type = store_type
@@ -49,23 +50,11 @@ class API_v1_0(object):
 
     # Verify a feed
     def __verify_feed_name(self, feed):
-        is_valid = False
-
-        for value in self.valid_feeds:
-            if value == feed:
-                is_valid = True
-                break
-
-        return is_valid
+        return any(value == feed for value in self.valid_feeds)
 
     # Verify output format
     def __verify_format(self, format):
-        is_valid = True
-
-        if format != 'json' and format != 'xml' and format != 'csv':
-            is_valid = False
-
-        return is_valid
+        return format in ['json', 'xml', 'csv']
 
     # Feed URL (with only a league specified)
     def __league_only_url(self, league, feed, output_format, params):
@@ -87,7 +76,7 @@ class API_v1_0(object):
         if "fordate" in params:
             filename += "-" + params["fordate"]
 
-        filename += "." + output_format
+        filename += f".{output_format}"
 
         return filename
 
@@ -132,7 +121,9 @@ class API_v1_0(object):
     # Establish BASIC auth credentials
     def set_auth_credentials(self, username, password):
         self.auth = (username, password)
-        self.headers['Authorization'] = 'Basic ' + base64.b64encode('{}:{}'.format(username,password).encode('utf-8')).decode('ascii')
+        self.headers['Authorization'] = 'Basic ' + base64.b64encode(
+            f'{username}:{password}'.encode('utf-8')
+        ).decode('ascii')
 
     # Request data (and store it if applicable)
     def get_data(self, **kwargs):
@@ -160,7 +151,7 @@ class API_v1_0(object):
                 params[key] = value
 
         # add force=false parameter (helps prevent unnecessary bandwidth use)
-        if not "force" in params:
+        if "force" not in params:
             params['force'] = 'false'
 
         if self.__verify_feed_name(feed) == False:
@@ -175,7 +166,7 @@ class API_v1_0(object):
             url = self.__league_and_season_url(league, season, feed, output_format, params)
 
         if self.verbose:
-            print("Making API request to '{}'.".format(url))
+            print(f"Making API request to '{url}'.")
             print("  with headers:")
             print(self.headers)
             print(" and params:")
